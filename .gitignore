@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env.bak/
+.eggs/
+*.egg-info/
+*.egg
+
+# Data
+data/*.npy
+data/*.npz
+data/*.pkl
+data/*.pt
+
+# Checkpoints
+*.pth
+*.ckpt
+checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+wandb/
+runs/
