@@ -11,10 +11,7 @@ env.bak/
 *.egg
 
 # Data
-data/*.npy
-data/*.npz
-data/*.pkl
-data/*.pt
+data/datasets/*
 
 # Checkpoints
 *.pth

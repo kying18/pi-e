@@ -23,8 +23,8 @@ def record(policy, output_path, num_episodes=3, fps=20):
 
     env = MovingObjectEnv()
 
-    # Collect frames
-    frames = []
+    # Collect video frames for output
+    video_frames = []
     episodes_done = 0
 
     obs, _ = env.reset()
@@ -33,31 +33,29 @@ def record(policy, output_path, num_episodes=3, fps=20):
         if policy is None:
             action = env.action_space.sample()
         else:
-            action = policy(env)
+            action = policy.act(obs)
+            # action = policy.act(env)
 
         obs, reward, terminated, truncated, info = env.step(action)
 
         # Convert observation to BGR for OpenCV
         frame = cv2.cvtColor(obs, cv2.COLOR_RGB2BGR)
-        frames.append(frame)
+        video_frames.append(frame)
 
         if terminated:
             episodes_done += 1
             print(f"Episode {episodes_done}/{num_episodes} done")
             obs, _ = env.reset()
-            # Add a few blank frames between episodes
-            for _ in range(10):
-                frames.append(frame)
 
     pygame.quit()
 
     # Write video
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    h, w = frames[0].shape[:2]
+    h, w = video_frames[0].shape[:2]
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
 
-    for frame in frames:
+    for frame in video_frames:
         out.write(frame)
 
     out.release()
@@ -65,7 +63,15 @@ def record(policy, output_path, num_episodes=3, fps=20):
 
 
 if __name__ == "__main__":
-    from expert.expert_policy import ExpertPolicy
+    # Random policy
+    record(None, "notes/videos/00_random_policy.mp4", num_episodes=10)
 
-    expert = ExpertPolicy()
-    record(expert.act, "notes/videos/01_expert_policy.mp4", num_episodes=3)
+    # from expert.expert_policy import ExpertPolicy
+    # expert = ExpertPolicy()
+    # record(expert, "notes/videos/01_expert_policy.mp4", num_episodes=10)
+
+    # from policy.bc_policy import BcPolicy
+    # bc_policy = BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy")
+    # record(bc_policy, "notes/videos/03_bc_policy.mp4", num_episodes=10)
+    # bc_policy = BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy_dagger")
+    # record(bc_policy, "notes/videos/06_bc_policy_dagger.mp4", num_episodes=10)

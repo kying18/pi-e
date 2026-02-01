@@ -1,7 +1,6 @@
 import numpy as np
-import policy.policy as policy
 
-class ExpertPolicy(policy.Policy):
+class ExpertPolicy:
     def __init__(self):
         super().__init__()
 

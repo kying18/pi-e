@@ -20,7 +20,6 @@ def run(policy=None, n_frames=3):
 
     env = MovingObjectEnv()
     obs, _ = env.reset()
-    frames = [np.zeros((256, 256, 3), dtype=np.uint8) for _ in range(n_frames-1)]
 
     running = True
     episode = 0
@@ -34,11 +33,6 @@ def run(policy=None, n_frames=3):
         if policy is None:
             action = env.action_space.sample()
         else:
-            if n_frames > 1:
-                frames.append(obs)
-                if len(frames) > n_frames:
-                    frames.pop(0)
-                obs = np.concatenate(frames, axis=2)
             action = policy.act(obs)
 
         obs, reward, terminated, truncated, info = env.step(action)
@@ -64,7 +58,5 @@ if __name__ == "__main__":
     # run(policy=None)
     # print("Running with expert policy...")
     # run(policy=ExpertPolicy())
-    # print("Running with BC policy...")
-    # run(policy=BcPolicy(use_best_model=True))
-    print("Running with multi-img BC policy...")
-    run(policy=MultiImgBcPolicy(use_best_model=True))
+    print("Running with BC policy...")
+    run(policy=BcPolicy(use_best_model=True))
