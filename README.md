@@ -1,10 +1,10 @@
 # pi-e
 
-Exploring Pi0 policies with experience.
+Hypothesis: robotic policies would benefit from a memory bank of sorts. If we can successfully demonstrate this with a toy problem using pi0, this provides evidence that having something that resembles memory may benefit the model. I'd love to call this pi-e (pi with experience)
 
 ## Goal
 
-Implement Physical Intelligence's Pi0 architecture from scratch, building up incrementally:
+Implement Physical Intelligence's Pi architecture from scratch, building up incrementally:
 
 1. Behavior cloning (supervised learning)
 2. Action chunking (predict action sequences)
