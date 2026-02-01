@@ -18,6 +18,7 @@ def collect_expert_data(num_episodes=1000):
 
     observations = []
     actions = []
+    episode_ends = []
 
     for episode in range(num_episodes):
         obs, _ = env.reset()
@@ -31,11 +32,13 @@ def collect_expert_data(num_episodes=1000):
             if terminated or truncated:
                 break
 
+        episode_ends.append(len(observations))
+
         if episode % 100 == 0:
             print(f"Collected {episode}/{num_episodes} episodes")
 
     env.close()
-    return observations, actions
+    return observations, actions, episode_ends
 
 
 def collect_dagger_data(policy, num_episodes=100):
@@ -51,6 +54,7 @@ def collect_dagger_data(policy, num_episodes=100):
 
     observations = []
     actions = []
+    episode_ends = []
 
     for episode in range(num_episodes):
         obs, _ = env.reset()
@@ -69,24 +73,34 @@ def collect_dagger_data(policy, num_episodes=100):
             if terminated or truncated:
                 break
 
+        episode_ends.append(len(observations))
+
         if episode % 100 == 0:
             print(f"Collected {episode}/{num_episodes} episodes")
 
     env.close()
-    return observations, actions
+    return observations, actions, episode_ends
 
 
-def save_data(observations, actions, filename):
+def save_data(observations, actions, filename, episode_ends=None):
     """Save observations and actions to .npz file."""
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     observations = np.array(observations)
     actions = np.array(actions)
-    np.savez(filename, observations=observations, actions=actions)
+    if episode_ends is not None:
+        episode_ends = np.array(episode_ends)
+        np.savez(filename, observations=observations, actions=actions, episode_ends=episode_ends)
+    else:
+        np.savez(filename, observations=observations, actions=actions)
     print(f"Saved {len(observations)} samples to {filename}")
 
 
 if __name__ == "__main__":
+    # Collect expert data
+    # observations, actions, episode_ends = collect_expert_data(num_episodes=1000)
+    # save_data(observations, actions, "data/datasets/expert_data_with_episode_ends.npz", episode_ends)
+
     # Collect DAgger data with current learned policy
-    learned_policy = BcPolicy(use_best_model=True)
-    observations, actions = collect_dagger_data(learned_policy, num_episodes=100)
-    save_data(observations, actions, "data/datasets/expert_data_dagger.npz")
+    learned_policy = BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy")
+    observations, actions, episode_ends = collect_dagger_data(learned_policy, num_episodes=300)
+    save_data(observations, actions, "data/datasets/expert_data_bc_dagger_with_episode_ends.npz", episode_ends)

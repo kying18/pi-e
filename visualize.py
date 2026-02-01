@@ -4,9 +4,10 @@ from policy.policy import Policy
 from policy.bc_policy import BcPolicy
 from expert.expert_policy import ExpertPolicy
 from policy.multi_img_bc_policy import MultiImgBcPolicy
+from policy.action_chunking_policy import ActionChunkingPolicy
 import numpy as np
 
-def run(policy=None, n_frames=3):
+def run(policy=None):
     """
     Visualize the environment with a given policy.
     If policy is None, uses random actions.
@@ -58,5 +59,7 @@ if __name__ == "__main__":
     # run(policy=None)
     # print("Running with expert policy...")
     # run(policy=ExpertPolicy())
-    print("Running with BC policy...")
-    run(policy=BcPolicy(use_best_model=True))
+    # print("Running with BC policy...")
+    # run(policy=BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy"))
+    print("Running with action chunking policy...")
+    run(policy=ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="action_chunking_policy"))

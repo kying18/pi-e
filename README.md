@@ -48,7 +48,7 @@ python visualize.py
 - [x] Data collection
 - [x] Behavior cloning policy (single-frame)
 - [x] DAgger for single-frame BC
-- [ ] Action chunking
+- [x] Action chunking
 - [ ] Transformer policy
 - [ ] Flow matching
 - [ ] Pi0-style architecture
@@ -103,3 +103,29 @@ After abandoning multi-frame BC, we returned to single-frame BC and implemented 
 | BC (single-frame) | [03_bc_policy.mp4](notes/videos/03_bc_policy.mp4) |
 | BC + DAgger | [06_bc_policy_dagger.mp4](notes/videos/06_bc_policy_dagger.mp4) |
 | Multi-frame BC (abandoned) | [04_multi_img_bc_policy.mp4](notes/videos/04_multi_img_bc_policy.mp4) |
+| Action chunking (open-loop) | [07_action_chunking_policy.mp4](notes/videos/07_action_chunking_policy.mp4) |
+| Action chunking (RH4 + episode ends + padding) | [07_action_chunking_policy_rh4_episode_ends_padded.mp4](notes/videos/07_action_chunking_policy_rh4_episode_ends_padded.mp4) |
+
+### Action Chunking
+
+Predict 8 future actions at once instead of 1. Key idea from ACT that carries into Pi0.
+
+**Execution modes:**
+- Open-loop: execute all 8 actions, then re-predict
+- Receding horizon: predict 8, execute fewer (e.g., 4), then re-predict
+
+**Data improvements:**
+- Added `episode_ends` tracking to avoid cross-episode contamination
+- Zero-pad action chunks at episode boundaries
+
+**Results:** Receding horizon (4) + clean episode data produces smoother execution. However, for this simple task, not dramatically better than BC + DAgger. Action chunking likely shines more on complex tasks with temporal structure.
+
+### Why Keep the Simple Task?
+
+We're already performing this task quite well with BC + DAgger. But we'll continue with this toy example because it's easier to build and compare architectures when keeping the task the same. Once we understand the full Pi0 architecture (transformers, flow matching, VLA), we can expand to harder scenarios:
+
+- Multi-step tasks (catch ball → carry to goal)
+- Partial observability (ball goes behind occluder, needs memory)
+- Variable dynamics (ball behavior changes mid-episode)
+- Multi-object reasoning (multiple balls, specific order)
+- Longer horizon planning

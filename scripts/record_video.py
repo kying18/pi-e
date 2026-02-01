@@ -28,6 +28,8 @@ def record(policy, output_path, num_episodes=3, fps=20):
     episodes_done = 0
 
     obs, _ = env.reset()
+    if policy is not None and hasattr(policy, 'reset'):
+        policy.reset()
 
     while episodes_done < num_episodes:
         if policy is None:
@@ -46,6 +48,8 @@ def record(policy, output_path, num_episodes=3, fps=20):
             episodes_done += 1
             print(f"Episode {episodes_done}/{num_episodes} done")
             obs, _ = env.reset()
+            if policy is not None and hasattr(policy, 'reset'):
+                policy.reset()
 
     pygame.quit()
 
@@ -64,7 +68,7 @@ def record(policy, output_path, num_episodes=3, fps=20):
 
 if __name__ == "__main__":
     # Random policy
-    record(None, "notes/videos/00_random_policy.mp4", num_episodes=10)
+    # record(None, "notes/videos/00_random_policy.mp4", num_episodes=10)
 
     # from expert.expert_policy import ExpertPolicy
     # expert = ExpertPolicy()
@@ -75,3 +79,7 @@ if __name__ == "__main__":
     # record(bc_policy, "notes/videos/03_bc_policy.mp4", num_episodes=10)
     # bc_policy = BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy_dagger")
     # record(bc_policy, "notes/videos/06_bc_policy_dagger.mp4", num_episodes=10)
+
+    from policy.action_chunking_policy import ActionChunkingPolicy
+    action_chunking_policy = ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="episode_ends_padded_action_chunking_policy", chunk_size=8, actions_per_inference=2)
+    record(action_chunking_policy, "notes/videos/07_action_chunking_policy_rh2_episode_ends_padded.mp4", num_episodes=10)
