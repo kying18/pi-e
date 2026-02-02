@@ -4,13 +4,20 @@ Hypothesis: robotic policies would benefit from a memory bank of sorts. If we ca
 
 ## Goal
 
-Implement Physical Intelligence's Pi architecture from scratch, building up incrementally:
+Implement Physical Intelligence's Pi architecture from scratch, building up incrementally through the key papers/techniques that led to it:
 
-1. Behavior cloning (supervised learning)
-2. Action chunking (predict action sequences)
-3. Transformer-based policy
-4. Flow matching for action generation
-5. Full Pi0-style vision-language-action model
+1. **Behavior cloning** - supervised learning baseline
+2. **Action chunking** - predict action sequences (key idea from ACT)
+3. **Transformer decoder with action queries** - ACT-style architecture
+4. **ViT encoder** - replace CNN with Vision Transformer
+5. **Flow matching** - generative action modeling (replaces direct regression)
+6. **VLA** - add language conditioning for full Pi0-style model
+
+### Why this progression?
+
+- **ACT** (2023, from Pi team) introduced action chunking + transformer decoder with learned action queries
+- **Pi0** builds on ACT, adding flow matching and language conditioning
+- Understanding ACT's transformer decoder is key to understanding Pi0
 
 ## Environment
 
@@ -49,9 +56,10 @@ python visualize.py
 - [x] Behavior cloning policy (single-frame)
 - [x] DAgger for single-frame BC
 - [x] Action chunking
-- [ ] Transformer policy
+- [x] Transformer decoder with action queries (ACT-style)
+- [ ] ViT encoder
 - [ ] Flow matching
-- [ ] Pi0-style architecture
+- [ ] Language conditioning (VLA)
 
 ## Lessons Learned
 

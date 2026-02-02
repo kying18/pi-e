@@ -80,6 +80,14 @@ if __name__ == "__main__":
     # bc_policy = BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy_dagger")
     # record(bc_policy, "notes/videos/06_bc_policy_dagger.mp4", num_episodes=10)
 
-    from policy.action_chunking_policy import ActionChunkingPolicy
-    action_chunking_policy = ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="episode_ends_padded_action_chunking_policy", chunk_size=8, actions_per_inference=2)
-    record(action_chunking_policy, "notes/videos/07_action_chunking_policy_rh2_episode_ends_padded.mp4", num_episodes=10)
+    # from policy.action_chunking_policy import ActionChunkingPolicy
+    # action_chunking_policy = ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="episode_ends_padded_action_chunking_policy", chunk_size=8, actions_per_inference=2)
+    # record(action_chunking_policy, "notes/videos/07_action_chunking_policy_rh2_episode_ends_padded.mp4", num_episodes=10)
+
+    from policy.act_policy import ActPolicy
+    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=8)
+    record(act_policy, "notes/videos/08_act_policy_small_open_loop.mp4", num_episodes=10)
+    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=4)
+    record(act_policy, "notes/videos/08_act_policy_small_rh4.mp4", num_episodes=10)
+    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=2)
+    record(act_policy, "notes/videos/08_act_policy_small_rh2.mp4", num_episodes=10)

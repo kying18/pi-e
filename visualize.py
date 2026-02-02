@@ -5,6 +5,7 @@ from policy.bc_policy import BcPolicy
 from expert.expert_policy import ExpertPolicy
 from policy.multi_img_bc_policy import MultiImgBcPolicy
 from policy.action_chunking_policy import ActionChunkingPolicy
+from policy.act_policy import ActPolicy
 import numpy as np
 
 def run(policy=None):
@@ -61,5 +62,7 @@ if __name__ == "__main__":
     # run(policy=ExpertPolicy())
     # print("Running with BC policy...")
     # run(policy=BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy"))
-    print("Running with action chunking policy...")
-    run(policy=ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="action_chunking_policy"))
+    # print("Running with action chunking policy...")
+    # run(policy=ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="action_chunking_policy"))
+    print("Running with ACT policy...")
+    run(policy=ActPolicy(use_checkpoint=True, checkpoint_name="act_policy"))

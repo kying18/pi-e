@@ -19,7 +19,7 @@ class ActionChunkingPolicy(Policy):
             - Any value in between for partial open-loop.
     """
 
-    def __init__(self, use_checkpoint=False, checkpoint_name="episode_ends_action_chunking_policy",
+    def __init__(self, use_checkpoint=False, checkpoint_name="action_chunking_policy",
                  chunk_size=8, actions_per_inference=None):
         super().__init__()
         self.device = self._get_device()
