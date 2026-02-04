@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from policy.policy import Policy
+from .policy import Policy
 
 
 class BcPolicy(Policy):

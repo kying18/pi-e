@@ -1,58 +1,51 @@
-import os
 import torch
 import torch.nn as nn
-import torch.optim as optim
+import os
 import cv2
 import numpy as np
+import torch.optim as optim
 
 from .policy import Policy
 
-class ActModel(nn.Module):
+class ViTModel(nn.Module):
     def __init__(self, chunk_size=8):
         super().__init__()
-        self.embed_dim = 32
-        self.cnn_encoder = nn.Sequential(
-            # input: 128x128x3
-            nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=4, stride=4),
-            # output: 32x32x32
-            nn.Conv2d(32, self.embed_dim, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # output: 16x16x32
+        self.embed_dim = 64
+        self.patch_size = 16
+        self.patch_embed = nn.Sequential(
+          nn.Conv2d(3, self.embed_dim, kernel_size=self.patch_size, stride=self.patch_size),
+          nn.ReLU(),
         )
-        # self.cnn_encoder = nn.Sequential(
-        #   # input: 128x128x3
-        #     nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
-        #     nn.ReLU(),
-        #     nn.MaxPool2d(kernel_size=2, stride=2),
-        #     # output: 64x64x16
-        #     nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-        #     nn.ReLU(),
-        #     nn.MaxPool2d(kernel_size=2, stride=2),
-        #     # output: 32x32x32
-        # )
+        self.pos_embed = nn.Parameter(torch.randn(1, (128 // self.patch_size) ** 2, self.embed_dim) * 0.02)
+        self.transformer_encoder = nn.TransformerEncoder(
+          nn.TransformerEncoderLayer(d_model=self.embed_dim, dim_feedforward=256, nhead=4, batch_first=True),
+          num_layers=2,
+        )
         self.transformer_decoder = nn.TransformerDecoder(
             nn.TransformerDecoderLayer(d_model=self.embed_dim, dim_feedforward=256, nhead=2, batch_first=True),
             num_layers=2,
         )
         self.action_chunk_head = nn.Linear(self.embed_dim, 2) # one action per query
         self.action_queries = nn.Parameter(torch.randn(1, chunk_size, self.embed_dim) * 0.02)
-        self.pos_embed = nn.Parameter(torch.randn(1, 16*16, self.embed_dim) * 0.02)
     
     def forward(self, x):
-        memory = self.cnn_encoder(x)
-        # output (B, 32, 16, 16)
-        memory = memory.flatten(2).transpose(1, 2)
-        # output (B, 32, 256)
-        memory = memory + self.pos_embed
+        patches = self.patch_embed(x)
+        # output (B, embed_dim, 128 // patch_size, 128 // patch_size)
+        # output (B, 32, 8, 8)
+        patches = patches.flatten(2).transpose(1, 2)
+        # output (B, 64, 32)
+        patches = patches + self.pos_embed
+        # output (B, 64, 32)
+
+        # encode patches
+        patches = self.transformer_encoder(patches)
+        # output (B, 64, 32)
 
         batch_size = x.shape[0]
         tgt = self.action_queries.expand(batch_size, -1, -1)
         # output (B, chunk_size, embed_dim)
-
-        x = self.transformer_decoder(tgt, memory)
+  
+        x = self.transformer_decoder(tgt, patches)
         # output (B, chunk_size, embed_dim)
         x = self.action_chunk_head(x)
         # output (B, chunk_size, 2)
@@ -60,18 +53,17 @@ class ActModel(nn.Module):
 
 
 # TODO: combine with ActionChunkingPolicy to avoid code duplication for act().
-class ActPolicy(Policy):
+class ViTPolicy(Policy):
     """Action chunking policy with transformer decoder.
 
-        Args:
-            chunk_size: Number of actions to predict at once.
-            actions_per_inference: How many actions to execute before re-predicting.
-                - chunk_size (default): Open-loop execution of entire chunk.
-                - 1: Receding horizon (predict every step, use first action only).
-                - Any value in between for partial open-loop.
+    Args:
+        chunk_size: Number of actions to predict at once.
+        actions_per_inference: How many actions to execute before re-predicting.
+            - chunk_size (default): Open-loop execution of entire chunk.
+            - 1: Receding horizon (predict every step, use first action only).
+            - Any value in between for partial open-loop.
     """
-
-    def __init__(self, use_checkpoint=False, checkpoint_name="action_chunking_policy",
+    def __init__(self, use_checkpoint=False, checkpoint_name="vit_policy",
                  chunk_size=8, actions_per_inference=None):
         super().__init__()
         self.device = self._get_device()
@@ -85,12 +77,12 @@ class ActPolicy(Policy):
         policy_dir = os.path.dirname(os.path.abspath(__file__))
         self.checkpoint_path = os.path.join(policy_dir, "checkpoints", f"{checkpoint_name}.pth")
 
-        self.model = ActModel(chunk_size=chunk_size).to(self.device)
+        self.model = ViTModel(chunk_size=chunk_size).to(self.device)
 
         if use_checkpoint:
             self.model.load_state_dict(torch.load(self.checkpoint_path))
 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
 
     def act(self, obs):
         """Return next action. Re-predicts when actions_per_inference exhausted."""
@@ -120,5 +112,5 @@ class ActPolicy(Policy):
         self._action_idx = 0
 
 if __name__ == "__main__":
-    model = ActModel(chunk_size=8)
+    model = ViTModel(chunk_size=8)
     print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")

@@ -84,10 +84,18 @@ if __name__ == "__main__":
     # action_chunking_policy = ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="episode_ends_padded_action_chunking_policy", chunk_size=8, actions_per_inference=2)
     # record(action_chunking_policy, "notes/videos/07_action_chunking_policy_rh2_episode_ends_padded.mp4", num_episodes=10)
 
-    from policy.act_policy import ActPolicy
-    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=8)
-    record(act_policy, "notes/videos/08_act_policy_small_open_loop.mp4", num_episodes=10)
-    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=4)
-    record(act_policy, "notes/videos/08_act_policy_small_rh4.mp4", num_episodes=10)
-    act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=2)
-    record(act_policy, "notes/videos/08_act_policy_small_rh2.mp4", num_episodes=10)
+    # from policy.act_policy import ActPolicy
+    # act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=8)
+    # record(act_policy, "notes/videos/08_act_policy_small_open_loop.mp4", num_episodes=10)
+    # act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=4)
+    # record(act_policy, "notes/videos/08_act_policy_small_rh4.mp4", num_episodes=10)
+    # act_policy = ActPolicy(use_checkpoint=True, checkpoint_name="act_policy_small", chunk_size=8, actions_per_inference=2)
+    # record(act_policy, "notes/videos/08_act_policy_small_rh2.mp4", num_episodes=10)
+
+    from policy.vit_policy import ViTPolicy
+    vit_policy = ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16", chunk_size=8, actions_per_inference=8)
+    record(vit_policy, "notes/videos/09_vit_policy_patch16_open_loop.mp4", num_episodes=10)
+    vit_policy = ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16", chunk_size=8, actions_per_inference=4)
+    record(vit_policy, "notes/videos/09_vit_policy_patch16_rh4.mp4", num_episodes=10)
+    vit_policy = ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16", chunk_size=8, actions_per_inference=2)
+    record(vit_policy, "notes/videos/09_vit_policy_patch16_rh2.mp4", num_episodes=10)

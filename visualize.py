@@ -8,6 +8,8 @@ from policy.action_chunking_policy import ActionChunkingPolicy
 from policy.act_policy import ActPolicy
 import numpy as np
 
+from policy.vit_policy import ViTPolicy
+
 def run(policy=None):
     """
     Visualize the environment with a given policy.
@@ -64,5 +66,7 @@ if __name__ == "__main__":
     # run(policy=BcPolicy(use_checkpoint=True, checkpoint_name="bc_policy"))
     # print("Running with action chunking policy...")
     # run(policy=ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="action_chunking_policy"))
-    print("Running with ACT policy...")
-    run(policy=ActPolicy(use_checkpoint=True, checkpoint_name="act_policy"))
+    # print("Running with ACT policy...")
+    # run(policy=ActPolicy(use_checkpoint=True, checkpoint_name="act_policy"))
+    print("Running with ViT policy...")
+    run(policy=ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16"))

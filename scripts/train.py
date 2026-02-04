@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from policy.bc_policy import BcPolicy
 from policy.action_chunking_policy import ActionChunkingPolicy
 from policy.act_policy import ActPolicy
+from policy.vit_policy import ViTPolicy
 from data.dataset import create_dataloaders, create_action_chunking_dataloaders
 
 
@@ -99,8 +100,26 @@ def train_act_policy(data_paths=None, max_samples=5000, checkpoint_name=None):
         policy = ActPolicy(use_checkpoint=False, checkpoint_name=checkpoint_name)
     policy.train(train_loader, val_loader)
 
+# TODO: combine with train_act_policy to avoid code duplication for train().
+def train_vit_policy(data_paths=None, max_samples=5000, checkpoint_name=None):
+    if data_paths is None:
+        data_paths = ["data/datasets/expert_data_with_episode_ends.npz", "data/datasets/expert_data_bc_dagger_with_episode_ends.npz"]
+    observations, actions, episode_ends = load_data(*data_paths)
+
+    train_loader, val_loader = create_action_chunking_dataloaders(
+        observations, actions, batch_size=64, train_split=0.7,
+        max_samples=max_samples, episode_ends=episode_ends
+    )
+
+    if checkpoint_name is None:
+        policy = ViTPolicy(use_checkpoint=False)
+    else:
+        policy = ViTPolicy(use_checkpoint=False, checkpoint_name=checkpoint_name)
+    policy.train(train_loader, val_loader)
+
 if __name__ == "__main__":
     # train_bc_policy(max_samples=10000)
     # train_bc_with_dagger(max_samples=10000)
     # train_action_chunking_policy(max_samples=10000, checkpoint_name="episode_ends_padded_action_chunking_policy")
-    train_act_policy(max_samples=10000, checkpoint_name="act_policy_small")
+    # train_act_policy(max_samples=10000, checkpoint_name="act_policy_small")
+    train_vit_policy(max_samples=20000, checkpoint_name="vit_policy_patch16")
