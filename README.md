@@ -36,8 +36,10 @@ pi/
 ├── expert/               # Expert policy for demonstrations
 │   └── expert_policy.py
 ├── policy/               # Learned policies
+├── eval/                 # Evaluation framework
 ├── scripts/              # Training and evaluation
 ├── data/                 # Collected demonstrations
+├── notes/                # Design notes and videos
 └── visualize.py          # Visualization
 ```
 
@@ -57,7 +59,8 @@ python visualize.py
 - [x] DAgger for single-frame BC
 - [x] Action chunking
 - [x] Transformer decoder with action queries (ACT-style)
-- [ ] ViT encoder
+- [x] ViT encoder
+- [x] Evaluation framework + baseline metrics
 - [ ] Flow matching
 - [ ] Language conditioning (VLA)
 
@@ -113,6 +116,33 @@ After abandoning multi-frame BC, we returned to single-frame BC and implemented 
 | Multi-frame BC (abandoned) | [04_multi_img_bc_policy.mp4](notes/videos/04_multi_img_bc_policy.mp4) |
 | Action chunking (open-loop) | [07_action_chunking_policy.mp4](notes/videos/07_action_chunking_policy.mp4) |
 | Action chunking (RH4 + episode ends + padding) | [07_action_chunking_policy_rh4_episode_ends_padded.mp4](notes/videos/07_action_chunking_policy_rh4_episode_ends_padded.mp4) |
+
+### Transformer Decoder (ACT-style)
+
+Replaced the MLP action head with a transformer decoder using learned action queries. Each action in the chunk gets its own query that attends to image tokens via cross-attention.
+
+**Key result:** 60x fewer parameters than BC/action chunking (69K vs 4.2M) with comparable or better performance. The flatten+linear bottleneck in BC/action chunking explodes with image size, while transformer params scale with d_model, independent of token count.
+
+**Receding horizon helps:** Open-loop (execute all 8) causes pausing near the target. RH4 (predict 8, execute 4) and RH2 are progressively smoother.
+
+### ViT Encoder
+
+Replaced the CNN encoder with a Vision Transformer (patch embeddings + self-attention encoder, then cross-attention decoder).
+
+**Training required more data:** 10k samples stayed flat for 30+ epochs. 20k samples + lower lr (1e-4) converged by epoch 40. This matches the original ViT paper — without convolutional inductive biases, the model needs more data to learn spatial relationships.
+
+### Baseline Metrics
+
+| Policy | Steps to Capture | Path Inefficiency | Dir. Consistency | Mag. Continuity | Completed | Params |
+|---|---:|---:|---:|---:|---:|---:|
+| Expert | 16.83 ± 10.25 | 1.06 ± 0.07 | 0.982 ± 0.029 | 0.031 ± 0.045 | 1.000 | N/A |
+| BC + DAgger | 31.55 ± 26.58 | 1.38 ± 0.95 | 0.929 ± 0.097 | 0.135 ± 0.084 | 0.910 | 4.2M |
+| BC | 32.62 ± 31.41 | 2.00 ± 12.79 | 0.969 ± 0.039 | 0.094 ± 0.054 | 0.840 | 4.2M |
+| ACT (RH4) | 23.98 ± 15.22 | 1.20 ± 0.26 | 0.911 ± 0.111 | 0.140 ± 0.097 | 1.000 | 69K |
+| ViT (RH4) | 25.39 ± 15.90 | 1.24 ± 0.52 | 0.915 ± 0.087 | 0.125 ± 0.076 | 1.000 | 287K |
+| Random | 89.99 ± 26.47 | 14.54 ± 13.45 | 0.009 ± 0.159 | 0.681 ± 0.096 | 0.157 | N/A |
+
+ACT (RH4) and ViT (RH4) are the best learned policies — near-expert completion rate with 15-60x fewer parameters than BC.
 
 ### Action Chunking
 
