@@ -84,7 +84,7 @@ class ViTPolicy(Policy):
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
 
-    def act(self, obs):
+    def act(self, obs, env):
         """Return next action. Re-predicts when actions_per_inference exhausted."""
         # Need new prediction?
         if self._action_chunk is None or self._action_idx >= self.actions_per_inference:

@@ -128,7 +128,7 @@ class MultiImgBcPolicy(policy.Policy):
             torch.save(self.model.state_dict(), self.checkpoint_path)
             print(f"Saved model to {self.checkpoint_path}")
 
-    def act(self, obs):
+    def act(self, obs, env):
       # set model to evaluation mode
       self.model.eval()
       with torch.no_grad():

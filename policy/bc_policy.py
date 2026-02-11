@@ -41,7 +41,7 @@ class BcPolicy(Policy):
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
 
-    def act(self, obs):
+    def act(self, obs, env):
         self.model.eval()
         with torch.no_grad():
             obs = cv2.resize(obs, (128, 128))

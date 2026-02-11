@@ -36,16 +36,21 @@ class MovingObjectEnv(gym.Env):
             dtype=np.float32
         )
 
-    def reset(self, seed=None):
+    def copy(self):
+        return MovingObjectEnv()
+
+    def reset(self, seed=None, rng=None):
         super().reset(seed=seed)
+        if rng is None:
+            rng = np.random.default_rng(seed)
         # Random ball starting position and velocity
-        self.ball_pos = np.random.rand(2) * 200 + 28
-        angle = np.random.rand() * 2 * np.pi
-        speed = np.random.rand() * 3 + 1
+        self.ball_pos = rng.random(2) * 200 + 28
+        angle = rng.random() * 2 * np.pi
+        speed = rng.random() * 3 + 1
         self.ball_vel = np.array([np.cos(angle), np.sin(angle)]) * speed
 
         # Random end-effector starting position
-        self.ee_pos = np.random.rand(2) * 200 + 28
+        self.ee_pos = rng.random(2) * 200 + 28
 
         return self._get_obs(), {}
 

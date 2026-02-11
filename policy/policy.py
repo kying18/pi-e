@@ -61,5 +61,5 @@ class Policy:
                 torch.save(self.model.state_dict(), self.checkpoint_path)
                 print(f"Saved checkpoint to {self.checkpoint_path}")
 
-    def act(self, obs):
+    def act(self, obs, env):
         raise NotImplementedError

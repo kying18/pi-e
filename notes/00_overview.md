@@ -14,8 +14,10 @@ Implement Physical Intelligence's Pi0 architecture from scratch, building up inc
 6. [DAgger](06_dagger.md) - Fix covariate shift ✓
 7. Action Chunking - (next)
 8. Transformer Policy - (upcoming)
-9. Flow Matching - (upcoming)
-10. Full Pi0 - (upcoming)
+9. ViT Encoder - (upcoming)
+10. Baseline Metrics - (current)
+11. Flow Matching - (upcoming)
+12. Full Pi0 - (upcoming)
 
 ## Key Insights
 

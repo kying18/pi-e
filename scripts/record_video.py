@@ -35,8 +35,7 @@ def record(policy, output_path, num_episodes=3, fps=20):
         if policy is None:
             action = env.action_space.sample()
         else:
-            action = policy.act(obs)
-            # action = policy.act(env)
+            action = policy.act(obs, env)
 
         obs, reward, terminated, truncated, info = env.step(action)
 

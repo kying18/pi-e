@@ -4,11 +4,10 @@ class ExpertPolicy:
     def __init__(self):
         super().__init__()
 
-    def act(self, env):
+    def act(self, obs, env):
         """
         Expert policy that uses true state to compute optimal action.
         """
-
         ball_pos = env.ball_pos
         ball_vel = env.ball_vel
         ee_pos = env.ee_pos
