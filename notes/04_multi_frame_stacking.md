@@ -23,6 +23,10 @@ With multiple frames, the model can learn:
 - Frame t-1 vs t-2 difference = confirms velocity direction
 - Better prediction of where to intercept
 
+## Status
+
+**Abandoned.** A CNN treats all channels equally regardless of whether they represent different color channels or different time steps. Stacking frames along the channel dimension provides no temporal inductive bias — the model has no way to know which channels are "earlier" vs "later". Modern approaches use attention over frame sequences or action chunking instead.
+
 ---
 
 Location: `scripts/collect_data.py` (n_frames parameter)

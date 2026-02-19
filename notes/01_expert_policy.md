@@ -24,7 +24,7 @@ Expert catches the ball reliably in ~10-50 steps depending on starting positions
 
 ## Video
 
-[TODO: Add video of expert policy]
+[01_expert_policy.mp4](videos/01_expert_policy.mp4)
 
 ---
 

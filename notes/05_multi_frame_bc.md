@@ -47,17 +47,11 @@ This is a fundamental limitation of pure behavior cloning.
 
 ## Video
 
-[TODO: Add video showing corner-sticking behavior]
+[04_multi_img_bc_policy.mp4](videos/04_multi_img_bc_policy.mp4)
 
-## Next Step: DAgger
+## Status
 
-DAgger (Dataset Aggregation) addresses covariate shift:
-1. Run learned policy
-2. Record what the *expert* would have done at each step
-3. Add this to training data
-4. Retrain and repeat
-
-This teaches the policy how to recover from mistakes.
+**Abandoned.** Frame stacking inherits the same fundamental flaw as the dataset approach (step 4): a CNN has no way to distinguish temporal order from channel order. The corner-sticking covariate shift problem is real but is better addressed by DAgger (step 6) than by multi-frame input. DAgger on a single-frame BC policy outperforms this approach with fewer architectural assumptions.
 
 ---
 

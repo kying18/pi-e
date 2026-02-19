@@ -1,169 +1,160 @@
-# pi-e
+# pi-e: Policy with Experience
 
-Hypothesis: robotic policies would benefit from a memory bank of sorts. If we can successfully demonstrate this with a toy problem using pi0, this provides evidence that having something that resembles memory may benefit the model. I'd love to call this pi-e (pi with experience)
+**Hypothesis**: robot policies that can draw on persistent experience — not just the current observation window — will generalize better to tasks requiring spatial recall, object permanence, and long-horizon reasoning.
 
-## Goal
+This repository is a ground-up implementation track toward that hypothesis: rebuild the core ingredients of modern VLA policies one component at a time, in a controlled simulation where each architectural change is attributable and measurable. Once the generative action model is in place, memory is the next experimental variable.
 
-Implement Physical Intelligence's Pi architecture from scratch, building up incrementally through the key papers/techniques that led to it:
+The name reflects the end goal. Current "memory" in most policies is just the context window — a fixed lookback of frames. *pi-e* is built to eventually test what happens when you replace or augment that with richer, persistent experience.
 
-1. **Behavior cloning** - supervised learning baseline
-2. **Action chunking** - predict action sequences (key idea from ACT)
-3. **Transformer decoder with action queries** - ACT-style architecture
-4. **ViT encoder** - replace CNN with Vision Transformer
-5. **Flow matching** - generative action modeling (replaces direct regression)
-6. **VLA** - add language conditioning for full Pi0-style model
+---
 
-### Why this progression?
+## Progression
 
-- **ACT** (2023, from Pi team) introduced action chunking + transformer decoder with learned action queries
-- **Pi0** builds on ACT, adding flow matching and language conditioning
-- Understanding ACT's transformer decoder is key to understanding Pi0
+Each stage is implemented from scratch and evaluated before the next is added:
 
-## Environment
+| # | Component | Status |
+|---|-----------|--------|
+| 1 | Expert policy (rule-based) | done |
+| 2 | Behavior cloning (single-frame) | done |
+| 3 | DAgger (covariate shift correction) | done |
+| 4 | Action chunking (open-loop + receding horizon) | done |
+| 5 | ACT-style transformer decoder with action queries | done |
+| 6 | ViT encoder + transformer decoder | done |
+| 7 | Evaluation harness with rollout metrics | done |
+| 8 | Flow-matching action head | next |
+| 9 | Language conditioning (VLA) | upcoming |
+| 10 | Memory experiments | upcoming |
 
-Simple 2D ball interception task:
-- Red ball bounces around the screen
-- Blue end-effector (robot) must intercept it
-- Observation: 256x256 RGB image
-- Action: (dx, dy) velocity command
+---
 
-## Structure
+## Experimental Setting
+
+2D interception task:
+
+- Observation: RGB image
+- Action: `(dx, dy)` end-effector velocity
+- Goal: move blue end-effector to capture red bouncing ball
+
+The environment is intentionally simple so that model and control changes are attributable and measurable. Complexity is added to the policy, not the environment.
+
+---
+
+## Results
+
+Evaluated over 300 rollouts per policy with fixed seed and settings.
+
+| Policy | Steps to Capture | Path Inefficiency | Completed Rate | Params |
+|--------|----------------:|------------------:|---------------:|-------:|
+| Expert | 16.83 ± 10.25 | 1.06 ± 0.07 | 1.000 | N/A |
+| BC + DAgger | 31.55 ± 26.58 | 1.38 ± 0.95 | 0.910 | 4.2M |
+| ACT (RH4) | 23.98 ± 15.22 | 1.20 ± 0.26 | 1.000 | 69K |
+| ViT (RH4) | 25.39 ± 15.90 | 1.24 ± 0.52 | 1.000 | 287K |
+| Random | 89.99 ± 26.47 | 14.54 ± 13.45 | 0.157 | N/A |
+
+Takeaways:
+
+- Receding-horizon ACT and ViT reach expert-level completion at 69K and 287K parameters respectively.
+- ACT is 60× more parameter-efficient than the flatten+MLP BC baseline while outperforming it on every metric.
+- Transformer-based policies close most of the gap to the expert while using far fewer parameters than MLP heads.
+
+Full breakdown including action chunking, open-loop variants, smoothness, and trajectory length: [`notes/10_baseline_metrics.md`](notes/10_baseline_metrics.md).
+
+---
+
+## Video Highlights
+
+| BC + DAgger | ACT (RH4) | ViT (RH4) |
+|-------------|-----------|-----------|
+| [![BC + DAgger](notes/images/bc_dagger_thumb.png)](notes/videos/06_bc_policy_dagger.mp4) | [![ACT RH4](notes/images/act_rh4_thumb.png)](notes/videos/08_act_policy_small_rh4.mp4) | [![ViT RH4](notes/images/vit_rh4_thumb.png)](notes/videos/09_vit_policy_patch16_rh4.mp4) |
+
+---
+
+## What Was Learned at Each Stage
+
+**BC → DAgger**: Expert demonstrations undersample failure-recovery states. DAgger corrects covariate shift by labeling states the learned policy actually visits, not just states the expert visits.
+
+**Action chunking**: Open-loop chunk execution is surprisingly fragile on dynamic targets. Receding-horizon execution (re-plan every 4 steps) recovers most of the gap at no architectural cost.
+
+**Transformer decoder (ACT)**: Learned action queries replace the flattened CNN output + MLP head. The result is better performance at 60× fewer parameters — the decoder adds structure that the MLP cannot.
+
+**ViT encoder**: Replacing the CNN with a patch-based ViT encoder gives comparable performance at a higher parameter cost, but establishes the backbone for language conditioning later.
+
+**Multi-frame stacking (abandoned)**: Frame stacking (concatenating along channels, à la DQN) was implemented and discarded. A CNN treats all channels equally; it provides no temporal inductive bias. Attention over frame sequences or action chunking is the right path.
+
+---
+
+## Technical Scope
 
 ```
 pi/
-├── env/                  # Environment
-│   └── moving_object.py
-├── expert/               # Expert policy for demonstrations
-│   └── expert_policy.py
-├── policy/               # Learned policies
-├── eval/                 # Evaluation framework
-├── scripts/              # Training and evaluation
-├── data/                 # Collected demonstrations
-├── notes/                # Design notes and videos
-└── visualize.py          # Visualization
+├── env/                  # simulation environment
+├── expert/               # rule-based expert policy
+├── policy/               # learned policies (BC, chunking, ACT, ViT)
+│   ├── bc_policy.py
+│   ├── action_chunking_policy.py
+│   ├── act_policy.py
+│   └── vit_policy.py
+├── data/                 # datasets + dataloaders
+├── scripts/              # training / collection scripts
+├── eval/                 # metric computation + evaluation runners
+├── experiments/          # ablation matrix, run log, findings journal
+├── notes/                # implementation notes, metrics, videos
+└── visualize.py          # interactive visualization
 ```
 
-## Usage
+---
 
-Visualize with expert policy:
+## Running
+
 ```bash
+# Visualize expert
 python visualize.py
+
+# Train
+python scripts/train.py
+
+# Evaluate
+python eval/run_eval.py
 ```
 
-## Progress
+---
 
-- [x] Environment
-- [x] Expert policy
-- [x] Data collection
-- [x] Behavior cloning policy (single-frame)
-- [x] DAgger for single-frame BC
-- [x] Action chunking
-- [x] Transformer decoder with action queries (ACT-style)
-- [x] ViT encoder
-- [x] Evaluation framework + baseline metrics
-- [ ] Flow matching
-- [ ] Language conditioning (VLA)
+## Current Limitations
 
-## Lessons Learned
+1. **Task simplicity**: the interception environment does not yet test long-horizon planning, memory, or complex contact dynamics — by design, but a real constraint on what the current results claim.
+2. **Script ergonomics**: train/eval entrypoints are script-based and not yet unified into a single configurable CLI.
+3. **Dataset scope**: demonstrations are from one toy domain; no cross-task or multi-domain pretraining.
+4. **No flow matching yet**: action generation is still regression-based, not generative.
+5. **No language conditioning yet**: VLA behavior is planned but not implemented.
 
-### Multi-frame BC (frame stacking) - Abandoned
+---
 
-Attempted stacking 3 frames along channel dimension (H, W, 9) to provide temporal information. This approach had several problems:
+## Next Milestones
 
-1. **Zero-frame contamination**: First observations in each episode have zero-padding for older frames, teaching the model to ignore temporal channels.
+1. **Flow-matching action head** — drop-in replacement for direct regression; the natural next step before generative VLA behavior.
+2. **Language-conditioned control** — minimal language conditioning on top of the ViT/ACT backbone.
+3. **Harder tasks** — partial observability, multi-step goals, variable dynamics.
+4. **Memory experiments** — test whether persistent experience (episodic memory, spatial recall) improves policies on tasks that exceed a single observation window. The frame-lookback context that current policies use is a lower bound on what memory could be.
 
-2. **No temporal inductive bias**: Conv2d treats all 9 channels equally - it doesn't know channels 0-2, 3-5, 6-8 represent different time steps.
+---
 
-3. **DAgger bootstrap failure**: Collecting DAgger data with a poorly-trained policy produces low-quality data that doesn't help.
+## Reproducibility
 
-4. **It's a 2015-era technique**: Frame stacking was popularized by DQN for Atari. Modern approaches (ACT, Pi0) handle temporal information differently:
-   - Encode each frame separately with a vision encoder
-   - Use transformer attention over frame embeddings
-   - Or use action chunking, which implicitly captures dynamics
+- Evaluation: `eval/run_eval.py`
+- Environment: `MovingObjectEnv` (`env/moving_object.py`)
+- Episodes per policy: 300
+- Max steps: 100
+- Seed: 42
+- RH4 variants share the same checkpoint; only `actions_per_inference=4` changes.
+- Full metric details: `notes/10_baseline_metrics.md`
+- Experiment log: `experiments/runs.csv`
 
-**Takeaway**: Skip frame stacking. For temporal reasoning, use action chunking or attention over frame sequences.
+---
 
-### Single-frame BC + DAgger
+## Notes
 
-After abandoning multi-frame BC, we returned to single-frame BC and implemented DAgger properly.
-
-**Training setup (same for BC and BC+DAgger):**
-- 10k datapoints
-- Learning rate: 1e-3
-- Train/val split: 70/30
-- Batch size: 64
-- Epochs: 45
-- Simple CNN encoder (2 conv layers → MLP)
-
-**DAgger collection:**
-- Run learned policy in environment (which drifts to edges/corners)
-- Label those edge states with expert recovery actions
-- Aggregate with original expert data and retrain from scratch
-
-**Why it works:**
-- Expert is good → stays centered → expert data lacks edge samples
-- Learned policy is imperfect → visits edges → DAgger captures edge recovery data
-- Result: policy learns to avoid/recover from edges
-
-**Results:**
-
-| Policy | Video |
-|--------|-------|
-| Random | [00_random_policy.mp4](notes/videos/00_random_policy.mp4) |
-| Expert | [01_expert_policy.mp4](notes/videos/01_expert_policy.mp4) |
-| BC (single-frame) | [03_bc_policy.mp4](notes/videos/03_bc_policy.mp4) |
-| BC + DAgger | [06_bc_policy_dagger.mp4](notes/videos/06_bc_policy_dagger.mp4) |
-| Multi-frame BC (abandoned) | [04_multi_img_bc_policy.mp4](notes/videos/04_multi_img_bc_policy.mp4) |
-| Action chunking (open-loop) | [07_action_chunking_policy.mp4](notes/videos/07_action_chunking_policy.mp4) |
-| Action chunking (RH4 + episode ends + padding) | [07_action_chunking_policy_rh4_episode_ends_padded.mp4](notes/videos/07_action_chunking_policy_rh4_episode_ends_padded.mp4) |
-
-### Transformer Decoder (ACT-style)
-
-Replaced the MLP action head with a transformer decoder using learned action queries. Each action in the chunk gets its own query that attends to image tokens via cross-attention.
-
-**Key result:** 60x fewer parameters than BC/action chunking (69K vs 4.2M) with comparable or better performance. The flatten+linear bottleneck in BC/action chunking explodes with image size, while transformer params scale with d_model, independent of token count.
-
-**Receding horizon helps:** Open-loop (execute all 8) causes pausing near the target. RH4 (predict 8, execute 4) and RH2 are progressively smoother.
-
-### ViT Encoder
-
-Replaced the CNN encoder with a Vision Transformer (patch embeddings + self-attention encoder, then cross-attention decoder).
-
-**Training required more data:** 10k samples stayed flat for 30+ epochs. 20k samples + lower lr (1e-4) converged by epoch 40. This matches the original ViT paper — without convolutional inductive biases, the model needs more data to learn spatial relationships.
-
-### Baseline Metrics
-
-| Policy | Steps to Capture | Path Inefficiency | Dir. Consistency | Mag. Continuity | Completed | Params |
-|---|---:|---:|---:|---:|---:|---:|
-| Expert | 16.83 ± 10.25 | 1.06 ± 0.07 | 0.982 ± 0.029 | 0.031 ± 0.045 | 1.000 | N/A |
-| BC + DAgger | 31.55 ± 26.58 | 1.38 ± 0.95 | 0.929 ± 0.097 | 0.135 ± 0.084 | 0.910 | 4.2M |
-| BC | 32.62 ± 31.41 | 2.00 ± 12.79 | 0.969 ± 0.039 | 0.094 ± 0.054 | 0.840 | 4.2M |
-| ACT (RH4) | 23.98 ± 15.22 | 1.20 ± 0.26 | 0.911 ± 0.111 | 0.140 ± 0.097 | 1.000 | 69K |
-| ViT (RH4) | 25.39 ± 15.90 | 1.24 ± 0.52 | 0.915 ± 0.087 | 0.125 ± 0.076 | 1.000 | 287K |
-| Random | 89.99 ± 26.47 | 14.54 ± 13.45 | 0.009 ± 0.159 | 0.681 ± 0.096 | 0.157 | N/A |
-
-ACT (RH4) and ViT (RH4) are the best learned policies — near-expert completion rate with 15-60x fewer parameters than BC.
-
-### Action Chunking
-
-Predict 8 future actions at once instead of 1. Key idea from ACT that carries into Pi0.
-
-**Execution modes:**
-- Open-loop: execute all 8 actions, then re-predict
-- Receding horizon: predict 8, execute fewer (e.g., 4), then re-predict
-
-**Data improvements:**
-- Added `episode_ends` tracking to avoid cross-episode contamination
-- Zero-pad action chunks at episode boundaries
-
-**Results:** Receding horizon (4) + clean episode data produces smoother execution. However, for this simple task, not dramatically better than BC + DAgger. Action chunking likely shines more on complex tasks with temporal structure.
-
-### Why Keep the Simple Task?
-
-We're already performing this task quite well with BC + DAgger. But we'll continue with this toy example because it's easier to build and compare architectures when keeping the task the same. Once we understand the full Pi0 architecture (transformers, flow matching, VLA), we can expand to harder scenarios:
-
-- Multi-step tasks (catch ball → carry to goal)
-- Partial observability (ball goes behind occluder, needs memory)
-- Variable dynamics (ball behavior changes mid-episode)
-- Multi-object reasoning (multiple balls, specific order)
-- Longer horizon planning
+- Implementation writeups: `notes/`
+- Baseline metrics + charts: `notes/10_baseline_metrics.md`
+- Technical report outline: `notes/11_technical_report_outline.md`
+- Rollout videos: `notes/videos/`
+- Experiment workflow: `experiments/README.md`

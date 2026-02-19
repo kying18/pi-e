@@ -24,7 +24,7 @@ Training:
 
 ## Video
 
-[TODO: Add video showing jittery behavior near ball]
+[03_bc_policy.mp4](videos/03_bc_policy.mp4)
 
 ---
 

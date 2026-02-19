@@ -1,0 +1,4 @@
+run_id,status,is_primary,ablation_id,policy,checkpoint,actions_per_inference,train_samples,eval_seed,eval_episodes,eval_max_steps,steps_to_capture_mean,steps_to_capture_std,path_ineff_mean,path_ineff_std,completed_rate_mean,completed_rate_std,dir_consistency_mean,mag_continuity_mean,trajectory_length_mean,params,config_hash,notes
+expert_baseline_s42,done,yes,baseline,expert,na,na,na,42,300,100,16.83,10.25,1.06,0.07,1.000,0.000,0.982,0.031,103.03,na,na,rule-based upper bound
+act_rh4_s42,done,yes,A2-4,act,act_policy_small,4,10000,42,300,100,23.98,15.22,1.20,0.26,1.000,0.000,0.911,0.140,128.04,69282,na,best learned tradeoff so far
+vit_rh4_s42,done,yes,A2-6,vit,vit_policy_patch16,4,20000,42,300,100,25.39,15.90,1.24,0.52,1.000,0.000,0.915,0.125,131.34,287426,na,near-ACT performance

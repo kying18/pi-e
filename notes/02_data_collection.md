@@ -12,13 +12,13 @@ Run the expert policy for many episodes, saving:
 
 ## Dataset Stats
 
-- Episodes: 100-1000
-- Steps per episode: varies (~10-50)
-- Total samples: ~5,000-50,000
+- Steps per episode: ~10-50 (expert captures quickly)
+- BC/ACT training: 10k samples (expert + DAgger)
+- ViT training: 20k samples (ViT needs more data; no CNN inductive bias)
 
 ## Video
 
-[TODO: Add video of data collection]
+See `notes/videos/01_expert_policy.mp4` for the expert generating demonstrations.
 
 ---
 
