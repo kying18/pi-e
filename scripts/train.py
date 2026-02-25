@@ -123,6 +123,7 @@ def train_flow_matching_policy(data_paths=None, max_samples=5000, checkpoint_nam
     if data_paths is None:
         data_paths = ["data/datasets/expert_data_with_episode_ends.npz", "data/datasets/expert_data_bc_dagger_with_episode_ends.npz"]
     observations, actions, episode_ends = load_data(*data_paths)
+    actions = actions / 5.0 # Scale actions to -1 to 1 to match N(0, 1)
 
     train_loader, val_loader = create_action_chunking_dataloaders(
         observations, actions, batch_size=64, train_split=0.7,
@@ -140,4 +141,5 @@ if __name__ == "__main__":
     # train_bc_with_dagger(max_samples=10000)
     # train_action_chunking_policy(max_samples=10000, checkpoint_name="episode_ends_padded_action_chunking_policy")
     # train_act_policy(max_samples=10000, checkpoint_name="act_policy_small")
-    train_vit_policy(max_samples=20000, checkpoint_name="vit_policy_patch16")
+    # train_vit_policy(max_samples=20000, checkpoint_name="vit_policy_patch16")
+    train_flow_matching_policy(max_samples=20000, checkpoint_name="flow_matching_policy")

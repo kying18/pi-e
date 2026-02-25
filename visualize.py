@@ -1,14 +1,15 @@
 import pygame
+import numpy as np
 from env.moving_object import MovingObjectEnv
+
 from policy.policy import Policy
 from policy.bc_policy import BcPolicy
 from expert.expert_policy import ExpertPolicy
 from policy.multi_img_bc_policy import MultiImgBcPolicy
 from policy.action_chunking_policy import ActionChunkingPolicy
 from policy.act_policy import ActPolicy
-import numpy as np
-
 from policy.vit_policy import ViTPolicy
+from policy.flow_matching_policy import FlowMatchingPolicy
 
 def run(policy=None):
     """
@@ -37,7 +38,7 @@ def run(policy=None):
         if policy is None:
             action = env.action_space.sample()
         else:
-            action = policy.act(obs)
+            action = policy.act(obs, env)
 
         obs, reward, terminated, truncated, info = env.step(action)
 
@@ -68,5 +69,7 @@ if __name__ == "__main__":
     # run(policy=ActionChunkingPolicy(use_checkpoint=True, checkpoint_name="action_chunking_policy"))
     # print("Running with ACT policy...")
     # run(policy=ActPolicy(use_checkpoint=True, checkpoint_name="act_policy"))
-    print("Running with ViT policy...")
-    run(policy=ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16"))
+    # print("Running with ViT policy...")
+    # run(policy=ViTPolicy(use_checkpoint=True, checkpoint_name="vit_policy_patch16"))
+    print("Running with Flow Matching policy...")
+    run(policy=FlowMatchingPolicy(use_checkpoint=True, checkpoint_name="flow_matching_policy", chunk_size=8, actions_per_inference=4))

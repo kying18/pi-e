@@ -21,8 +21,8 @@ Each stage is implemented from scratch and evaluated before the next is added:
 | 5 | ACT-style transformer decoder with action queries | done |
 | 6 | ViT encoder + transformer decoder | done |
 | 7 | Evaluation harness with rollout metrics | done |
-| 8 | Flow-matching action head | next |
-| 9 | Language conditioning (VLA) | upcoming |
+| 8 | Flow-matching action head | done |
+| 9 | Language conditioning (VLA) | next |
 | 10 | Memory experiments | upcoming |
 
 ---
@@ -49,6 +49,7 @@ Evaluated over 300 rollouts per policy with fixed seed and settings.
 | BC + DAgger | 31.55 ± 26.58 | 1.38 ± 0.95 | 0.910 | 4.2M |
 | ACT (RH4) | 23.98 ± 15.22 | 1.20 ± 0.26 | 1.000 | 69K |
 | ViT (RH4) | 25.39 ± 15.90 | 1.24 ± 0.52 | 1.000 | 287K |
+| Flow Matching (RH4) | 34.91 ± 21.31 | 1.44 ± 1.02 | 0.990 | ~290K |
 | Random | 89.99 ± 26.47 | 14.54 ± 13.45 | 0.157 | N/A |
 
 Takeaways:
@@ -56,6 +57,7 @@ Takeaways:
 - Receding-horizon ACT and ViT reach expert-level completion at 69K and 287K parameters respectively.
 - ACT is 60× more parameter-efficient than the flatten+MLP BC baseline while outperforming it on every metric.
 - Transformer-based policies close most of the gap to the expert while using far fewer parameters than MLP heads.
+- Flow matching reaches 0.99 completion rate but is slower per step than direct regression — expected on a unimodal task where regression has an inherent advantage.
 
 Full breakdown including action chunking, open-loop variants, smoothness, and trajectory length: [`notes/10_baseline_metrics.md`](notes/10_baseline_metrics.md).
 
@@ -79,6 +81,8 @@ Full breakdown including action chunking, open-loop variants, smoothness, and tr
 
 **ViT encoder**: Replacing the CNN with a patch-based ViT encoder gives comparable performance at a higher parameter cost, but establishes the backbone for language conditioning later.
 
+**Flow matching**: A generative action head that transforms Gaussian noise into action chunks by integrating a learned velocity field. Reaches 0.99 completion but trails direct regression on speed and path efficiency — on a unimodal task this is expected. The architecture is now in place for generative VLA behavior.
+
 **Multi-frame stacking (abandoned)**: Frame stacking (concatenating along channels, à la DQN) was implemented and discarded. A CNN treats all channels equally; it provides no temporal inductive bias. Attention over frame sequences or action chunking is the right path.
 
 ---
@@ -93,7 +97,8 @@ pi/
 │   ├── bc_policy.py
 │   ├── action_chunking_policy.py
 │   ├── act_policy.py
-│   └── vit_policy.py
+│   ├── vit_policy.py
+│   └── flow_matching_policy.py
 ├── data/                 # datasets + dataloaders
 ├── scripts/              # training / collection scripts
 ├── eval/                 # metric computation + evaluation runners
@@ -124,15 +129,13 @@ python eval/run_eval.py
 1. **Task simplicity**: the interception environment does not yet test long-horizon planning, memory, or complex contact dynamics — by design, but a real constraint on what the current results claim.
 2. **Script ergonomics**: train/eval entrypoints are script-based and not yet unified into a single configurable CLI.
 3. **Dataset scope**: demonstrations are from one toy domain; no cross-task or multi-domain pretraining.
-4. **No flow matching yet**: action generation is still regression-based, not generative.
-5. **No language conditioning yet**: VLA behavior is planned but not implemented.
+4. **No language conditioning yet**: VLA behavior is planned but not implemented.
 
 ---
 
 ## Next Milestones
 
-1. **Flow-matching action head** — drop-in replacement for direct regression; the natural next step before generative VLA behavior.
-2. **Language-conditioned control** — minimal language conditioning on top of the ViT/ACT backbone.
+1. **Language-conditioned control** — minimal language conditioning on top of the ViT/flow matching backbone.
 3. **Harder tasks** — partial observability, multi-step goals, variable dynamics.
 4. **Memory experiments** — test whether persistent experience (episodic memory, spatial recall) improves policies on tasks that exceed a single observation window. The frame-lookback context that current policies use is a lower bound on what memory could be.
 
@@ -155,6 +158,7 @@ python eval/run_eval.py
 
 - Implementation writeups: `notes/`
 - Baseline metrics + charts: `notes/10_baseline_metrics.md`
-- Technical report outline: `notes/11_technical_report_outline.md`
+- Flow matching notes: `notes/11_flow_matching.md`
+
 - Rollout videos: `notes/videos/`
 - Experiment workflow: `experiments/README.md`

@@ -13,7 +13,7 @@ class FlowModel(nn.Module):
         self.patch_size = 16
         self.patch_embed = nn.Sequential(
           nn.Conv2d(3, self.embed_dim, kernel_size=self.patch_size, stride=self.patch_size),
-          nn.ReLU(),
+          nn.GELU(),
         )
         self.pos_embed = nn.Parameter(torch.randn(1, (128 // self.patch_size) ** 2, self.embed_dim) * 0.02)
         self.transformer_encoder = nn.TransformerEncoder(
@@ -174,13 +174,16 @@ class FlowMatchingPolicy(Policy):
             obs = obs.unsqueeze(0).to(self.device)
 
             x_t = torch.normal(mean=0, std=1, size=(1, self.chunk_size, 2), device=self.device)
-            dt = 0.1
-            for t in torch.arange(0, 1 + dt, dt, device=self.device):
+            # TODO: replace with Runge-Kutta
+            N = 20
+            for i in range(N):
+                t = torch.tensor(i / N, dtype=torch.float32, device=self.device)
                 # t is a scalar (0d tensor), so we need to unsqueeze it to make it a 1d tensor
                 predicted_velocity = self.model(obs, t.unsqueeze(0), x_t).view(1, self.chunk_size, 2)
-                x_t = x_t + predicted_velocity * dt
+                x_t = x_t + (1/N) * predicted_velocity
 
             chunk = x_t.squeeze(0).view(self.chunk_size, 2)
+            chunk = chunk * 5.0 # Scale actions back to -5 to 5
             chunk = np.clip(chunk.cpu().numpy(), -5, 5)
 
         return chunk
